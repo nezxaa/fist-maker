@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fist Editor</title>
+<style>
+:root{--bg:#e9ecf0;--panel:#fff;--ink:#14171c;--mute:#5f6773;--line:#dadee4;--soft:#f1f3f6;--acc:#e5322d;--chk:#d5d9df;--chk2:#e6e9ee;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1115;--panel:#181b21;--ink:#eef0f3;--mute:#98a0ad;--line:#2c313a;--soft:#20242b;--acc:#ff5a52;--chk:#262a32;--chk2:#2e333c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1115;--panel:#181b21;--ink:#eef0f3;--mute:#98a0ad;--line:#2c313a;--soft:#20242b;--acc:#ff5a52;--chk:#262a32;--chk2:#2e333c;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:8px;height:56px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.by{color:var(--mute);font-size:13px;margin-right:auto}
+button,.lnk{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:0 14px;border-radius:8px;cursor:pointer;min-height:38px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+button:hover,.lnk:hover{background:var(--soft)}
+button:disabled{opacity:.4;cursor:default}
+button.go{background:var(--acc);border-color:var(--acc);color:#fff}button.go:hover{filter:brightness(1.08)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;height:calc(100dvh - 56px)}
+.stage{padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-width:0;overflow:auto}
+.cvwrap{flex:none;width:min(100%,540px);position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 1px var(--line);line-height:0;background:repeating-conic-gradient(var(--chk) 0 25%,var(--chk2) 0 50%) 0 0/20px 20px}
+.cvwrap.over{box-shadow:0 0 0 3px var(--acc)}
+canvas{width:100%;height:auto;display:block;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+.wm{position:absolute;right:10px;bottom:8px;font-size:12px;line-height:1;font-weight:700;opacity:.4;pointer-events:none}
+.meta{flex:none;display:flex;align-items:center;gap:14px;width:min(100%,540px);color:var(--mute);font-size:13px}
+.meta canvas{width:auto;flex:none;image-rendering:pixelated;border:1px solid var(--line);border-radius:6px;background:repeating-conic-gradient(var(--chk) 0 25%,var(--chk2) 0 50%) 0 0/8px 8px;touch-action:auto;cursor:default}
+.panel{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px;border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;color:var(--mute);min-height:40px;padding:0 4px}
+.tab[aria-selected=true]{background:var(--ink);color:var(--panel)}
+.panes{flex:1;overflow-y:auto;padding:14px 16px}
+.pane h3{margin:16px 0 6px;font-size:13px;font-weight:700;color:var(--mute)}.pane h3:first-child{margin-top:0}
+.row{display:grid;grid-template-columns:92px 1fr 54px;align-items:center;gap:8px;margin:4px 0}
+.row output{text-align:right;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
+.row.off{opacity:.35;pointer-events:none}
+input[type=range]{width:100%;accent-color:var(--acc);height:28px}
+.chips,.cols,.exp{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips .chip{flex:1}.exp button{flex:1}
+.chip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+label.t{display:flex;align-items:center;gap:10px;margin:2px 0;min-height:34px}
+label.t input{width:18px;height:18px;accent-color:var(--acc)}
+.cols label{display:flex;align-items:center;gap:8px;font-size:14px}
+input[type=color]{width:40px;height:32px;border:1px solid var(--line);background:none;padding:2px;border-radius:6px}
+.drop{position:relative;display:block;border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;color:var(--mute);margin:0 0 8px}
+.pick{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.drop:hover,.drop.over{border-color:var(--acc);color:var(--acc)}
+select{font:inherit;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-height:38px}
+.note{color:var(--mute);font-size:13px;margin:8px 0}
+.bar{display:flex;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--panel)}
+.bar button{flex:1}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s;z-index:9;max-width:90vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+dialog{width:min(520px,94vw);max-height:88dvh;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:22px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{margin:0 0 6px;font-size:22px}dialog h3{margin:16px 0 4px;font-size:15px}
+dialog ol,dialog ul{margin:4px 0;padding-left:20px}dialog li{margin:3px 0}dialog p{margin:6px 0}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:12px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:860px){
+main{display:block;height:auto}
+.stage{padding:14px;overflow:visible}
+.panel{border-left:0;border-top:1px solid var(--line)}
+.panes{overflow:visible}
+.bar{position:sticky;bottom:0}
+header .by{display:none}header{padding:0 10px}header button{padding:0 10px}
+}
+</style>
+</head>
+<body>
+<header><h1>Fist Editor</h1><span class="by">by nezxa.desgn</span>
+<button id="undo" title="Urungkan (Ctrl+Z)" disabled>Urungkan</button><button id="redo" title="Ulangi (Ctrl+Y)" disabled>Ulangi</button><button id="theme">Tema</button><button id="help">Info</button></header>
+<main>
+<section class="stage">
+  <div class="cvwrap" id="wrap"><canvas id="cv" aria-label="Kanvas editor"></canvas>
+    <span class="wm">nezxa.desgn</span></div>
+  <div class="meta"><canvas id="pv"></canvas><div><div id="pvl"></div><div id="hint">Geser ikon di kanvas. Scroll atau cubit untuk zoom.</div></div></div>
+</section>
+<section class="panel">
+  <div class="tabs" role="tablist"><button class="tab" role="tab" data-t="ikon" aria-selected="true">Ikon</button><button class="tab" role="tab" data-t="border" aria-selected="false">Border</button><button class="tab" role="tab" data-t="shadow" aria-selected="false">Bayangan</button><button class="tab" role="tab" data-t="canvas" aria-selected="false">Kanvas</button></div>
+  <div class="panes">
+  <div class="pane" id="p-ikon">
+    <label class="drop" id="dropF" tabindex="0">Drop / pilih gambar fist<input id="fileF" class="pick" type="file" accept="image/*"></label>
+    <div class="exp"><button id="fit">Isi penuh</button><button id="center">Tengahkan</button><button id="resetF">Reset ikon</button></div>
+    <h3>Ukuran dan posisi</h3><div id="slF"></div>
+    <h3>Opsi</h3>
+    <label class="t"><input type="checkbox" id="lock"> Kunci rasio (tanpa stretch)</label>
+    <label class="t"><input type="checkbox" id="flip"> Balik horizontal</label>
+    <label class="t"><input type="checkbox" id="clip"> Potong sesuai bentuk border</label>
+    <div class="cols"><label class="t"><input type="checkbox" id="tint"> Warnai ikon</label><input type="color" id="tintColor" value="#000000" aria-label="Warna ikon"></div>
+  </div>
+  <div class="pane" id="p-border" hidden>
+    <h3>Bentuk</h3>
+    <div class="chips" id="shapes"><button class="chip" data-s="circle" aria-pressed="false">Lingkaran</button><button class="chip" data-s="rounded" aria-pressed="true">Kotak</button><button class="chip" data-s="custom" aria-pressed="false">Custom</button></div>
+    <label class="drop" id="dropB" tabindex="0">Drop / pilih border custom (PNG/SVG)<input id="fileB" class="pick" type="file" accept="image/*"></label>
+    <h3>Ukuran</h3><div id="slB"></div>
+    <label class="t"><input type="checkbox" id="lockB"> Lebar = tinggi (kunci 1:1)</label>
+    <h3>Warna</h3>
+    <div class="cols"><label>Garis <input type="color" id="bcol" value="#000000"></label><label>Isi <input type="color" id="fcol" value="#ffffff"></label></div>
+    <label class="t"><input type="checkbox" id="fillOn"> Isi warna di dalam (matikan = transparan)</label>
+    <div id="slC"></div>
+  </div>
+  <div class="pane" id="p-shadow" hidden>
+    <h3>Jenis</h3>
+    <div class="chips" id="smode"><button class="chip" data-m="none">Tanpa</button><button class="chip" data-m="ground">Bawah</button><button class="chip" data-m="around">Sekitar</button><button class="chip" data-m="both">Keduanya</button></div>
+    <div id="slS"></div>
+    <div class="cols"><label>Warna bayangan <input type="color" id="scol" value="#000000"></label></div>
+  </div>
+  <div class="pane" id="p-canvas" hidden>
+    <h3>Ekspor</h3>
+    <div class="cols"><label>Rasio <select id="ratio"><option>1:1</option><option>4:3</option><option>3:4</option><option>16:9</option><option>9:16</option></select></label>
+    <label>Ukuran <select id="size"><option>32</option><option>64</option><option>128</option><option>256</option><option selected>512</option><option>1024</option><option>2048</option></select></label></div>
+    <p class="note">Semua satuan px mengikuti Ukuran ekspor. Untuk GTA SA HUD, pakai ukuran pangkat dua. Saat import ke TXD, pilih 32-bit tanpa kompresi.</p>
+    <h3>Latar</h3>
+    <div class="cols"><label class="t"><input type="checkbox" id="bgOn"> Pakai warna latar</label><input type="color" id="bg" value="#808080" aria-label="Warna latar"></div>
+    <h3>Lainnya</h3>
+    <div id="slX"></div>
+    <label class="t"><input type="checkbox" id="wm"> Watermark kecil di hasil ekspor</label>
+    <div class="exp" style="margin-top:12px"><button id="resetAll">Reset semua</button></div>
+  </div>
+  </div>
+  <div class="bar"><button class="go" id="png">PNG</button><button class="go" id="tga">TGA</button><button class="go" id="svg">SVG</button><button id="copy" title="Salin PNG ke clipboard">Salin</button></div>
+</section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="guide"><h2>Fist Editor</h2>
+<h3>Cara pakai</h3><ol><li>Drop, paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>), atau pilih gambar fist.</li><li>Geser ikon di kanvas, scroll atau cubit untuk zoom.</li><li>Tab Border: pilih bentuk, tebal, dan warna. Tab Bayangan: tambah bayangan.</li><li>Tab Kanvas: pilih rasio dan ukuran. Lalu unduh PNG, TGA, atau SVG.</li></ol>
+<h3>Pintasan</h3><ul><li><kbd>Ctrl</kbd>+<kbd>Z</kbd> urungkan, <kbd>Ctrl</kbd>+<kbd>Y</kbd> ulangi</li><li>Panah di kanvas: geser 1 px, dengan <kbd>Shift</kbd> 10 px</li></ul>
+<h3>Terima kasih</h3><p>Terima kasih sudah memakai Fist Editor. Ada kendala atau saran? Hubungi aku, atau donasi seikhlasnya jika terbantu.</p>
+<div class="exp"><a class="lnk" href="https://instagram.com/nezxa.desgn" target="_blank" rel="noopener">IG: nezxa.desgn</a><button id="dc">Discord: nezxaa_ (salin)</button></div>
+<div class="exp"><button class="go" id="don">Donasi seikhlasnya</button><button id="gclose">Tutup</button></div></dialog>
+<script>
+const $=s=>document.querySelector(s);
+/* Semua nilai bertanda px disimpan dalam piksel pada Ukuran ekspor (S.size).
+   REF = ukuran gambar referensi (500 px); dipakai hanya untuk skala rentang slider. */
+const REF=500;
+/* Default diukur dari fist.png referensi (500x500): border luar 464x422 px, tebal 32 px,
+   radius sudut luar ~78 px, pusat bingkai bergeser (-4,-1) dari tengah kanvas. Nilai di bawah
+   sudah dikonversi ke kanvas 512 px (x1,024) dan dibulatkan. */
+const DEF={shape:'rounded',s:475,rot:0,op:1,sx:1,sy:1,x:0,y:0,t:33,r:80,fw:475,fh:432,fx:-4,fy:-1,
+ lock:true,flip:false,clip:true,tint:false,tintColor:'#000000',bcol:'#000000',fcol:'#ffffff',fillOn:true,
+ smode:'none',scol:'#000000',gW:240,gH:40,gOp:.8,aBlur:28,aSpread:0,aY:8,aOp:.5,lockB:false,
+ ratio:'1:1',size:512,sharp:0,bgOn:false,bg:'#808080',wm:false,fillOp:1,gY:0}
+const CHK=['lock','flip','clip','tint','fillOn','lockB','bgOn','wm'];
+const DONATE_URL='';/* isi dengan link donasi (Saweria/Trakteer/dll) */;
+const S={...DEF};
+const PXK=['t','r','fw','fh','fx','fy','s','x','y','gW','gH','aBlur','aSpread','aY','gY'];
+let fistImg=null,fistSrc=null,custImg=null,custSrc=null;
+/* [kunci, label, min, maks, step, px?]  Untuk px: min/maks dalam px pada kanvas 500 px, diskalakan otomatis. */
+const SL={slF:[['s','Ukuran ikon',10,2000,1,1],['rot','Rotasi',-180,180,1],['op','Opasitas',0,1,.01],['sx','Stretch X',.2,2,.01],['sy','Stretch Y',.2,2,.01]],
+ slB:[['t','Tebal garis',0,120,1,1],['r','Sudut luar',0,250,1,1],['fw','Lebar border',20,1000,1,1],['fh','Tinggi border',20,1000,1,1],['fx','Geser X',-250,250,1,1],['fy','Geser Y',-250,250,1,1]],
+ slS:[['gW','Lebar bawah',10,500,1,1],['gH','Tinggi bawah',2,150,1,1],['gY','Y bawah',-100,200,1,1],['gOp','Gelap bawah',0,1,.01],['aBlur','Blur sekitar',0,120,1,1],['aSpread','Sebar sekitar',0,60,1,1],['aY','Y sekitar',-40,80,1,1],['aOp','Gelap sekitar',0,1,.01]],
+ slC:[['fillOp','Opasitas isi',0,1,.01]],slX:[['sharp','Pertajam',0,1,.05]]};
+const rows={},META={};
+for(const [id,list] of Object.entries(SL)){
+  for(const [k,l,mn,mx,st,px] of list){
+    META[k]={mn,mx,st,px:!!px};
+    const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<label for="r_${k}">${l}</label><input id="r_${k}" type="range"><output></output>`;
+    $('#'+id).appendChild(d);rows[k]=d;
+    const inp=d.querySelector('input');
+    inp.oninput=()=>{S[k]=+inp.value;if(S.lockB&&(k==='fw'||k==='fh'))S.fw=S.fh=S[k];sync();render()};
+  }
+}
+const kf=()=>S.size/REF;
+const pxStep=()=>kf()>=1?1:kf()>=.25?.5:.25;
+const snap=(v,s)=>Math.round(v/s)*s;
+function rng(k){const m=META[k];if(!m.px)return [m.mn,m.mx];const s=pxStep();return [snap(m.mn*kf(),s),snap(m.mx*kf(),s)]}
+function fmt(k){const v=+S[k];return META[k].px?(Number.isInteger(v)?v:v.toFixed(1))+'px':v.toFixed(v%1?2:0)}
+function sync(){
+  for(const k in rows){const m=META[k],i=rows[k].querySelector('input'),[mn,mx]=rng(k);
+    i.min=mn;i.max=mx;i.step=m.px?pxStep():m.st;i.value=S[k];
+    rows[k].querySelector('output').textContent=fmt(k)}
+  rows.sx.classList.toggle('off',S.lock);rows.sy.classList.toggle('off',S.lock);
+  rows.r.classList.toggle('off',S.shape==='circle');rows.fillOp.classList.toggle('off',!S.fillOn);
+  const gOn=S.smode==='ground'||S.smode==='both',aOn=S.smode==='around'||S.smode==='both';
+  ['gW','gH','gY','gOp'].forEach(k=>rows[k].classList.toggle('off',!gOn));['aBlur','aSpread','aY','aOp'].forEach(k=>rows[k].classList.toggle('off',!aOn));
+  document.querySelectorAll('#smode .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.m===S.smode));
+  document.querySelectorAll('#shapes .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.s===S.shape));
+}
+for(const id of CHK){const e=$('#'+id);e.checked=S[id];e.onchange=()=>{S[id]=e.checked;if(id==='lockB'&&S.lockB)S.fh=S.fw;sync();render()}}
+for(const id of ['tintColor','bg']){$('#'+id).oninput=e=>{S[id]=e.target.value;render()}}
+$('#bcol').oninput=e=>{S.bcol=e.target.value;render()};
+$('#fcol').oninput=e=>{S.fcol=e.target.value;render()};
+$('#scol').oninput=e=>{S.scol=e.target.value;render()};
+document.querySelectorAll('#smode .chip').forEach(c=>c.onclick=()=>{S.smode=c.dataset.m;sync();render()});
+$('#ratio').onchange=e=>{S.ratio=e.target.value;render()};
+/* ganti ukuran: semua nilai px ikut diskalakan agar tampilan tetap sama */
+$('#size').onchange=e=>{const n=+e.target.value,f=n/S.size;PXK.forEach(k=>{S[k]*=f});S.size=n;sync();render()};
+document.querySelectorAll('#shapes .chip').forEach(c=>c.onclick=()=>{
+  if(c.dataset.s==='custom'&&!custImg){$('#fileB').click();return}
+  S.shape=c.dataset.s;sync();render()});
+/* ikon: isi penuh bagian dalam border (cover), posisi relatif ke pusat border */
+function fitCover(){if(!fistImg)return;
+  const m=Math.max(fistImg.width,fistImg.height),sc=Math.max(Math.max(1,S.fw-S.t)/fistImg.width,Math.max(1,S.fh-S.t)/fistImg.height);
+  Object.assign(S,{s:m*sc,x:0,y:0,sx:1,sy:1,rot:0})}
+$('#fit').onclick=()=>{fitCover();sync();render()};
+$('#center').onclick=()=>{S.x=S.y=0;render()};
+$('#resetF').onclick=()=>{Object.assign(S,{op:1,flip:false});fitCover();$('#flip').checked=false;sync();render()};
+$('#resetAll').onclick=()=>{Object.assign(S,DEF);fitCover();for(const id of CHK)$('#'+id).checked=S[id];
+  $('#bcol').value=S.bcol;$('#fcol').value=S.fcol;$('#scol').value=S.scol;$('#ratio').value=S.ratio;$('#size').value=S.size;sync();render()};
+
+/* ---------- loading ---------- */
+const EXT={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',jfif:'image/jpeg',webp:'image/webp',gif:'image/gif',svg:'image/svg+xml',avif:'image/avif',bmp:'image/bmp'};
+function readImg(file){return new Promise((res,rej)=>{if(!file)return rej();
+  /* Android sering memberi file.type kosong (Google Foto, Drive, file manager); tebak dari ekstensi */
+  const t=file.type&&file.type.startsWith('image/')?file.type:(EXT[(file.name||'').split('.').pop().toLowerCase()]||'');
+  const fr=new FileReader();
+  fr.onload=()=>{let src=fr.result;if(t)src=src.replace(/^data:[^;,]*/,'data:'+t);
+    const im=new Image();im.onload=()=>res([im,src]);im.onerror=rej;im.src=src};
+  fr.onerror=rej;fr.readAsDataURL(file)})}
+async function setFist(f){try{[fistImg,fistSrc]=await readImg(f);fitCover();sync();$('#hint').textContent='Geser ikon untuk memindah. Cubit atau scroll untuk zoom.';render()}catch{$('#hint').textContent='File bukan gambar. Pilih PNG, JPG, WebP, atau SVG.'}}
+async function setBorder(f){try{[custImg,custSrc]=await readImg(f);S.shape='custom';sync();render()}catch{$('#hint').textContent='File border bukan gambar.'}}
+function zone(el,input,fn,extra){
+  /* klik ditangani label secara native; JS input.click() tambahan bikin picker terbuka dua kali di Android */
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click()}};
+  input.onchange=async()=>{const f=input.files&&input.files[0];if(!f)return;try{await fn(f)}finally{input.value=''}};
+  ['dragenter','dragover'].forEach(n=>el.addEventListener(n,e=>{e.preventDefault();(extra||el).classList.add('over')}));
+  ['dragleave','drop'].forEach(n=>el.addEventListener(n,e=>{e.preventDefault();(extra||el).classList.remove('over')}));
+  el.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)fn(f)});
+}
+zone($('#dropF'),$('#fileF'),setFist);zone($('#dropB'),$('#fileB'),setBorder);
+['dragover','drop'].forEach(n=>$('#wrap').addEventListener(n,e=>e.preventDefault()));
+$('#wrap').addEventListener('dragenter',e=>{e.preventDefault();$('#wrap').classList.add('over')});
+['dragleave','drop'].forEach(n=>$('#wrap').addEventListener(n,()=>$('#wrap').classList.remove('over')));
+$('#wrap').addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)setFist(f)});
+addEventListener('paste',e=>{const it=[...e.clipboardData.items].find(i=>i.type.startsWith('image/'));if(it)setFist(it.getAsFile())});
+
+/* ---------- geometry (dipakai canvas & SVG) ---------- */
+function dims(long){const [a,b]=S.ratio.split(':').map(Number);return a>=b?[long,Math.round(long*b/a)]:[Math.round(long*a/b),long]}
+/* k = skala dari px "ukuran ekspor" ke kanvas yang sedang digambar (1 saat ekspor, >1 saat supersampling/editor) */
+function geom(W,H){
+  const k=Math.max(W,H)/S.size;
+  const bw=S.fw*k,bh=S.fh*k,t=S.t*k,bx=W/2+S.fx*k-bw/2,by=H/2+S.fy*k-bh/2;
+  const gr=S.smode==='ground'||S.smode==='both',ar=S.smode==='around'||S.smode==='both';
+  const ry=Math.max(1,S.gH*k);
+  const G={k,bx,by,bw,bh,t,gr,ar,shadow:{cx:bx+bw/2,cy:by+bh-ry*.1+S.gY*k,rx:S.gW*k,ry}};
+  if(fistImg){
+    const sc=S.s*k/Math.max(fistImg.width,fistImg.height);
+    const kx=S.lock?1:S.sx,ky=S.lock?1:S.sy;
+    G.f={w:fistImg.width*sc*kx,h:fistImg.height*sc*ky,cx:bx+bw/2+S.x*k,cy:by+bh/2+S.y*k};
+  }
+  return G;
+}
+function inner(G){const h=G.t/2;return {x:G.bx+h,y:G.by+h,w:Math.max(1,G.bw-G.t),h:Math.max(1,G.bh-G.t)}}
+function path(c,x,y,w,h,r){
+  c.beginPath();
+  if(S.shape==='circle')c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+  else{r=Math.max(0,Math.min(r,w/2,h/2));c.roundRect?c.roundRect(x,y,w,h,r):(c.moveTo(x+r,y),c.arcTo(x+w,y,x+w,y+h,r),c.arcTo(x+w,y+h,x,y+h,r),c.arcTo(x,y+h,x,y,r),c.arcTo(x,y,x+w,y,r),c.closePath())}
+}
+/* radius garis tengah (untuk isi, potong, dan stroke); "Sudut luar" = radius tepi luar border */
+function centerR(G,cust){return cust?S.r*G.k:Math.max(0,S.r*G.k-G.t/2)}
+const FALL=[[0,1],[.2,.8],[.4,.5],[.6,.25],[.8,.08],[1,0]];
+function rgba(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16},${n>>8&255},${n&255},${a})`}
+let EM={};
+/* topeng bagian dalam border custom: flood-fill dari tepi kanvas, sisanya dianggap dalam */
+function extMask(G,W,H){
+  const key=[W,H,G.bx,G.by,G.bw,G.bh].join();if(EM.img===custImg&&EM.k===key)return EM.c;
+  const a=document.createElement('canvas');a.width=W;a.height=H;const x=a.getContext('2d');x.drawImage(custImg,G.bx,G.by,G.bw,G.bh);
+  const im=x.getImageData(0,0,W,H),d=im.data,ex=new Uint8Array(W*H),st=new Int32Array(W*H);let n=0;
+  const push=i=>{if(!ex[i]&&d[i*4+3]<16){ex[i]=1;st[n++]=i}};
+  for(let i=0;i<W;i++){push(i);push((H-1)*W+i)}for(let j=0;j<H;j++){push(j*W);push(j*W+W-1)}
+  while(n){const i=st[--n],X=i%W;if(X>0)push(i-1);if(X<W-1)push(i+1);if(i>=W)push(i-W);if(i+W<W*H)push(i+W)}
+  for(let i=0;i<W*H;i++){d[i*4]=d[i*4+1]=d[i*4+2]=0;d[i*4+3]=ex[i]?0:255}
+  x.putImageData(im,0,0);EM={img:custImg,k:key,c:a};return a}
+function aroundShadow(c,G){
+  const W=c.canvas.width,H=c.canvas.height,t=document.createElement('canvas');t.width=W;t.height=H;const x=t.getContext('2d');
+  const o=4000,sp=S.aSpread*G.k;
+  x.save();x.shadowColor=rgba(S.scol,S.aOp);x.shadowBlur=S.aBlur*G.k;x.shadowOffsetX=o;x.shadowOffsetY=S.aY*G.k;x.translate(-o,0);
+  if(S.shape==='custom'){if(custImg)x.drawImage(custImg,G.bx-sp,G.by-sp,G.bw+2*sp,G.bh+2*sp)}
+  else{path(x,G.bx-sp,G.by-sp,G.bw+2*sp,G.bh+2*sp,S.r*G.k+sp);x.fillStyle='#000';x.fill()}
+  x.restore();
+  punch(x,G,W,H);c.drawImage(t,0,0)}
+function punch(x,G,W,H){/* hapus bagian di dalam bentuk border dari bayangan */
+  x.globalCompositeOperation='destination-out';
+  if(S.shape==='custom'){if(custImg)x.drawImage(extMask(G,W,H),0,0)}
+  else{path(x,G.bx,G.by,G.bw,G.bh,S.r*G.k);x.fillStyle='#000';x.fill()}}
+function groundShadow(c,G){const W=c.canvas.width,H=c.canvas.height,t=document.createElement('canvas');t.width=W;t.height=H;const x=t.getContext('2d');
+  x.translate(G.shadow.cx,G.shadow.cy);x.scale(1,G.shadow.ry/G.shadow.rx);
+  const g=x.createRadialGradient(0,0,0,0,0,G.shadow.rx);FALL.forEach(([o,k])=>g.addColorStop(o,rgba(S.scol,S.gOp*k)));
+  x.fillStyle=g;x.beginPath();x.arc(0,0,G.shadow.rx,0,Math.PI*2);x.fill();x.setTransform(1,0,0,1,0,0);
+  punch(x,G,W,H);c.drawImage(t,0,0)}
+function drawScene(c,W,H){
+  c.clearRect(0,0,W,H);
+  c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  if(S.bgOn){c.fillStyle=S.bg;c.fillRect(0,0,W,H)}
+  const G=geom(W,H),I=inner(G),cust=S.shape==='custom',rr=centerR(G,cust);
+  if(G.ar)aroundShadow(c,G);
+  if(G.gr)groundShadow(c,G);
+  const P=cust?{x:G.bx,y:G.by,w:G.bw,h:G.bh}:I;
+  if(S.fillOn){c.save();c.globalAlpha=S.fillOp;path(c,P.x,P.y,P.w,P.h,rr);c.fillStyle=S.fcol;c.fill();c.restore()}
+  if(G.f){
+    c.save();if(S.clip){path(c,P.x,P.y,P.w,P.h,rr);c.clip()}
+    c.translate(G.f.cx,G.f.cy);c.rotate(S.rot*Math.PI/180);c.scale(S.flip?-1:1,1);c.globalAlpha=S.op;
+    let src=fistImg;
+    if(S.tint){const o=document.createElement('canvas');o.width=Math.max(1,fistImg.width);o.height=Math.max(1,fistImg.height);
+      const x=o.getContext('2d');x.drawImage(fistImg,0,0);x.globalCompositeOperation='source-in';x.fillStyle=S.tintColor;x.fillRect(0,0,o.width,o.height);src=o}
+    c.drawImage(src,-G.f.w/2,-G.f.h/2,G.f.w,G.f.h);c.restore();
+  }
+  if(cust){if(custImg)c.drawImage(custImg,G.bx,G.by,G.bw,G.bh)}
+  else if(S.t>0){path(c,I.x,I.y,I.w,I.h,rr);c.lineWidth=G.t;c.strokeStyle=S.bcol;c.stroke()}
+  if(S.wm){const fs=Math.max(8,Math.min(W,H)*.035);c.save();c.globalAlpha=.55;c.font=`700 ${fs}px sans-serif`;c.textAlign='right';c.textBaseline='bottom';c.lineWidth=fs*.15;c.strokeStyle='#000';c.fillStyle='#fff';c.strokeText('nezxa.desgn',W-fs*.5,H-fs*.4);c.fillText('nezxa.desgn',W-fs*.5,H-fs*.4);c.restore()}
+}
+/* ---------- SVG export ---------- */
+function toSVG(W,H){
+  const G=geom(W,H),I=inner(G),cust=S.shape==='custom';
+  const P=cust?{x:G.bx,y:G.by,w:G.bw,h:G.bh}:I,rr=centerR(G,cust),f=n=>+n.toFixed(2);
+  const shp=(a,extra='',r=rr)=>S.shape==='circle'?`<ellipse cx="${f(a.x+a.w/2)}" cy="${f(a.y+a.h/2)}" rx="${f(a.w/2)}" ry="${f(a.h/2)}" ${extra}/>`:
+    `<rect x="${f(a.x)}" y="${f(a.y)}" width="${f(a.w)}" height="${f(a.h)}" rx="${f(Math.max(0,Math.min(r,a.w/2,a.h/2)))}" ${extra}/>`;
+  const MK=(G.ar||G.gr)?(cust?(custImg?`<image href="${extMask(G,W,H).toDataURL()}" width="${W}" height="${H}"/>`:''):shp({x:G.bx,y:G.by,w:G.bw,h:G.bh},'fill="#000"',S.r*G.k)):'';
+  let o=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>`;
+  if(G.gr)o+=`<radialGradient id="gs">`+FALL.map(([s,k])=>`<stop offset="${s}" stop-color="${S.scol}" stop-opacity="${f(S.gOp*k)}"/>`).join('')+`</radialGradient>`;
+  if(G.ar)o+=`<filter id="ds" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur in="SourceAlpha" stdDeviation="${f(S.aBlur*G.k/2)}"/><feOffset dy="${f(S.aY*G.k)}" result="o"/><feFlood flood-color="${S.scol}" flood-opacity="${S.aOp}"/><feComposite in2="o" operator="in"/></filter>`;
+  if(S.tint)o+=`<filter id="tn"><feFlood flood-color="${S.tintColor}"/><feComposite in2="SourceAlpha" operator="in"/></filter>`;
+  if(S.clip)o+=`<clipPath id="cp">${shp(P)}</clipPath>`;
+  o+='</defs>';
+  if(S.bgOn)o+=`<rect width="${W}" height="${H}" fill="${S.bg}"/>`;
+  if(G.ar){const sp=S.aSpread*G.k,A={x:G.bx-sp,y:G.by-sp,w:G.bw+2*sp,h:G.bh+2*sp};
+    const sh=cust?(custImg?`<image href="${custSrc}" x="${f(A.x)}" y="${f(A.y)}" width="${f(A.w)}" height="${f(A.h)}" preserveAspectRatio="none" filter="url(#ds)"/>`:''):shp(A,'fill="#000" filter="url(#ds)"',S.r*G.k+sp);
+    o+=`<mask id="am" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/>${MK}</mask><g mask="url(#am)">${sh}</g>`}
+  if(G.gr)o+=`<mask id="gm" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/>${MK}</mask><g mask="url(#gm)"><ellipse cx="${f(G.shadow.cx)}" cy="${f(G.shadow.cy)}" rx="${f(G.shadow.rx)}" ry="${f(G.shadow.ry)}" fill="url(#gs)"/></g>`;
+  if(S.fillOn)o+=shp(P,`fill="${S.fcol}" fill-opacity="${S.fillOp}"`);
+  if(G.f){
+    const img=`<image href="${fistSrc}" x="${f(-G.f.w/2)}" y="${f(-G.f.h/2)}" width="${f(G.f.w)}" height="${f(G.f.h)}" opacity="${S.op}"${S.tint?' filter="url(#tn)"':''} transform="rotate(${S.rot}) scale(${S.flip?-1:1} 1)"/>`;
+    o+=`<g${S.clip?' clip-path="url(#cp)"':''}><g transform="translate(${f(G.f.cx)} ${f(G.f.cy)})">${img}</g></g>`;
+  }
+  if(cust){if(custImg)o+=`<image href="${custSrc}" x="${f(G.bx)}" y="${f(G.by)}" width="${f(G.bw)}" height="${f(G.bh)}" preserveAspectRatio="none"/>`}
+  else if(S.t>0)o+=shp(I,`fill="none" stroke="${S.bcol}" stroke-width="${f(G.t)}"`);
+  if(S.wm){const fs=Math.max(8,Math.min(W,H)*.035);o+=`<text x="${f(W-fs*.5)}" y="${f(H-fs*.4)}" font-family="sans-serif" font-weight="700" font-size="${f(fs)}" text-anchor="end" fill="#fff" stroke="#000" stroke-width="${f(fs*.15)}" paint-order="stroke" opacity=".55">nezxa.desgn</text>`}
+  return o+'</svg>';
+}
+/* ---------- render & interaksi ---------- */
+const cv=$('#cv'),cx=cv.getContext('2d');
+function render(){autoSave();const [w,h]=dims(512);if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}drawScene(cx,w,h);updatePv()}
+function renderExport(long){
+  const [w,h]=dims(long),k=long>=512?1:4;
+  let c=document.createElement('canvas');c.width=w*k;c.height=h*k;drawScene(c.getContext('2d'),w*k,h*k);
+  while(c.width>w){const n=document.createElement('canvas');n.width=Math.max(w,c.width/2);n.height=Math.max(h,c.height/2);
+    const x=n.getContext('2d');x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(c,0,0,n.width,n.height);c=n}
+  if(S.sharp>0&&long<=512)sharpen(c,S.sharp);
+  return c}
+function sharpen(c,a){const x=c.getContext('2d'),w=c.width,h=c.height,im=x.getImageData(0,0,w,h),d=im.data,o=new Uint8ClampedArray(d);
+  for(let y=0;y<h;y++)for(let i=0;i<w;i++){const p=(y*w+i)*4;if(!d[p+3])continue;
+    let s0=0,s1=0,s2=0,ws=0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=i+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=(Y*w+X)*4,wt=d[q+3];s0+=d[q]*wt;s1+=d[q+1]*wt;s2+=d[q+2]*wt;ws+=wt}
+    if(!ws)continue;
+    o[p]=d[p]+a*(d[p]-s0/ws);o[p+1]=d[p+1]+a*(d[p+1]-s1/ws);o[p+2]=d[p+2]+a*(d[p+2]-s2/ws)}
+  im.data.set(o);x.putImageData(im,0,0)}
+function toTGA(c){const w=c.width,h=c.height,d=c.getContext('2d').getImageData(0,0,w,h).data,b=new Uint8Array(18+w*h*4);
+  b[2]=2;b[12]=w&255;b[13]=w>>8;b[14]=h&255;b[15]=h>>8;b[16]=32;b[17]=0x28;
+  for(let i=0;i<w*h;i++){const p=i*4,q=18+p;b[q]=d[p+2];b[q+1]=d[p+1];b[q+2]=d[p];b[q+3]=d[p+3]}
+  return new Blob([b],{type:'image/x-tga'})}
+function updatePv(){const p=$('#pv'),r=renderExport(Math.min(S.size,512)),sc=Math.max(1,Math.floor(192/Math.max(r.width,r.height)));
+  p.width=r.width;p.height=r.height;p.style.width=Math.min(r.width*sc,112)+'px';p.getContext('2d').drawImage(r,0,0);
+  $('#pvl').textContent=`Pratinjau ${r.width}×${r.height} px${S.size>512?' (dibatasi 512)':''}`}
+const ptr=new Map();let pinch=0;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);if(ptr.size===2)pinch=pd()});
+cv.addEventListener('pointermove',e=>{
+  if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId),R=cv.getBoundingClientRect(),[dw,dh]=dims(S.size);
+  ptr.set(e.pointerId,[e.clientX,e.clientY]);
+  /* geser dihitung dalam px "ukuran ekspor" */
+  if(ptr.size===1){S.x+=(e.clientX-o[0])/R.width*dw;S.y+=(e.clientY-o[1])/R.height*dh}
+  else if(ptr.size===2){const d=pd();if(pinch){const [mn,mx]=rng('s');S.s=Math.min(mx,Math.max(mn,S.s*d/pinch))}pinch=d}
+  sync();render();
+});
+const up=e=>{ptr.delete(e.pointerId);pinch=0};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+function pd(){const [a,b]=[...ptr.values()];return Math.hypot(a[0]-b[0],a[1]-b[1])}
+cv.addEventListener('wheel',e=>{e.preventDefault();const [mn,mx]=rng('s');S.s=Math.min(mx,Math.max(mn,S.s*(e.deltaY<0?1.05:.95)));sync();render()},{passive:false});
+cv.tabIndex=0;
+cv.addEventListener('keydown',e=>{const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(d){e.preventDefault();const m=e.shiftKey?10:1;S.x+=d[0]*m;S.y+=d[1]*m;render()}});
+function save(blob,name){toast('Mengunduh '+name);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+$('#png').onclick=()=>renderExport(S.size).toBlob(b=>save(b,`fist-${S.size}.png`),'image/png');
+$('#tga').onclick=()=>save(toTGA(renderExport(S.size)),`fist-${S.size}.tga`);
+$('#svg').onclick=()=>{const [w,h]=dims(S.size);save(new Blob([toSVG(w,h)],{type:'image/svg+xml'}),'fist-icon.svg')};
+
+/* ---------- undo/redo, toast, panduan, kredit ---------- */
+const H={u:[],r:[],last:JSON.stringify(S),t:0};
+function hb(){$('#undo').disabled=!H.u.length;$('#redo').disabled=!H.r.length}
+function commit(){clearTimeout(H.t);const n=JSON.stringify(S);if(n!==H.last){H.u.push(H.last);if(H.u.length>100)H.u.shift();H.r=[];H.last=n}hb()}
+function autoSave(){clearTimeout(H.t);H.t=setTimeout(commit,400)}
+function applyState(j){Object.assign(S,JSON.parse(j));CHK.forEach(id=>$('#'+id).checked=S[id]);
+  ['bcol','fcol','scol','tintColor','bg'].forEach(id=>$('#'+id).value=S[id]);$('#ratio').value=S.ratio;$('#size').value=S.size;sync();render();hb()}
+function undo(){commit();if(!H.u.length)return;H.r.push(H.last);H.last=H.u.pop();applyState(H.last)}
+function redo(){commit();if(!H.r.length)return;H.u.push(H.last);H.last=H.r.pop();applyState(H.last)}
+$('#undo').onclick=undo;$('#redo').onclick=redo;
+addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))return;const k=e.key.toLowerCase();
+  if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();redo()}});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+$('#theme').onclick=()=>{const d=document.documentElement,dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;d.dataset.theme=dark?'light':'dark'};
+$('#help').onclick=()=>$('#guide').showModal();$('#gclose').onclick=()=>$('#guide').close();
+$('#guide').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+$('#copy').onclick=async()=>{try{const b=await new Promise(r=>renderExport(S.size).toBlob(r));await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);toast('PNG disalin ke clipboard')}catch{toast('Browser tidak mengizinkan salin. Pakai tombol PNG.')}};
+$('#dc').onclick=async()=>{try{await navigator.clipboard.writeText('nezxaa_');toast('Username Discord nezxaa_ disalin')}catch{toast('Discord: nezxaa_')}};
+$('#don').onclick=()=>DONATE_URL?open(DONATE_URL,'_blank','noopener'):toast('Terima kasih! Untuk donasi, hubungi IG nezxa.desgn atau Discord nezxaa_');
+try{if(!localStorage.getItem('fe_seen')){localStorage.setItem('fe_seen','1');$('#guide').showModal()}}catch{}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===b));document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!=='p-'+b.dataset.t)});
+sync();render();</script>
+</body>
+</html>
